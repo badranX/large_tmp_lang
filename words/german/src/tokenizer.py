@@ -7,6 +7,9 @@ pattern = re.compile(r"\w+'*\w+")
 
 def tokenize(txt):
     return pattern.findall(txt)
+    
+def tokenize_itr(txt):
+    return pattern.findall(txt)
 
 if __name__ == "__main__":
     print(tokenize("wow geht's the way's"))

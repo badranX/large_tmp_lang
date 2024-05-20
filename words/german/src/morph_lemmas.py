@@ -32,4 +32,5 @@ df['freq'] = df['inflection'].apply(lambda x: sum([freq.get(w, 0) for w in x]))
 
 df = df.sort_values(by='freq', ascending=False)
 #newdf = newdf[]
-df.to_csv("lemmas.tsv", sep='\t', index=False)
+#df.to_csv("lemmas.tsv", sep='\t', index=False)
+df.to_parquet("lemmas.parquet")
