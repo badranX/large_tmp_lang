@@ -1,4 +1,5 @@
 import json
+from toolz import compose
 from functools import reduce
 from collections import Counter
 from freq import Freq, lowercase_freqs
@@ -66,12 +67,14 @@ allwords.loc[:, 'inflection'] = allwords.inflection.apply(lambda x: list(filter(
 
 allwords.loc[:, 'freq'] = allwords.inflection.apply(lambda x: 
                                                 sum(freqs.get_freq(w) for w in x))
+allwords.loc[:, 'inflection'] = allwords.inflection.apply(lambda x: compose(list, sorted)(x, key=freqs.get_freq, reverse=True))
 
 allwords.loc[:, 'lemma_freq'] = allwords.lemma.apply(lambda x: freqs.get_freq(x))
 
-allwords = allwords.sort_values(by='freq', ascending=False)
-allwords.to_parquet('./openai.parquet') 
-allwords.to_csv('./openai.debug.csv', sep='\t', index=None) 
+allwords = allwords.sort_values(by='freq', ascending=False).reset_index()
+allwords = allwords.reset_index(drop=True)
+allwords.to_parquet('./openai.parquet', engine='pyarrow', index=False)
+allwords.to_csv('./openai.debug.csv', sep='\t', index=False) 
 #DONE processing
 
 #check english words
