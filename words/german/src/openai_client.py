@@ -12,7 +12,7 @@ SYSTEM_CONTENT = "You are a German language teacher and a dictionary author"
 
 class Client():
     #PROMPT = "Give ten examples without translation to learn the German word "
-    PROMPT = "Give ten examples without translation to learn the German " 
+    PROMPT = "Give ten usage examples without translation to learn the German " 
 
     #verb "gebrauchen" (inflections: "gebraucht", "gebrauchte", "gebrauchten"):
 
@@ -64,8 +64,10 @@ class Client():
     def request(self, item, save_column):
         #return 'TEST'
         save = item[save_column]
-        if save:
-            return item
+        #TODO remove this
+        #pos = item['pos'].lower()
+        if save:# #and pos == 'verb':
+            return item[save_column]
         args = self.construct_args(item)
         completion = self.client.chat.completions.create(**args)
         return completion.choices[0].message.content
@@ -75,13 +77,14 @@ def parse_input():
     load_dotenv()
     parser = argparse.ArgumentParser()
     parser.add_argument('openai', help='parquet file')
-    parser.add_argument('output', help='parquet file')
+    parser.add_argument('output', nargs='?', default="openai_response.parquet", help='parquet file')
     args = parser.parse_args()
     return args
 
 def process(preopenai):
     df = pd.read_parquet(preopenai)
-    df = df.drop(columns=['index'])
+    if 'index' in df.columns:
+        df = df.drop(columns=['index'])
     df = df.iloc[:5000]
     df = df.explode('pos')
     df = df[df.apply(Client.accept_item, axis=1)]
@@ -102,16 +105,20 @@ if __name__ == '__main__':
     if save not in df.columns:
         df[save] = ''
     
-    idx = slice(1000, 1002)
+    idx = slice(1401, 4999)
     #tmp = df.iloc[idx]
     #df[save].iloc[idx] = tmp.apply(lambda x: str(client.construct_args(x)), axis=1)
     #df[save].iloc[idx] = tmp.apply(lambda x: client.request(x, save), axis=1)
-    save_df(df, args.output)
+    #save_df(df, args.output)
     for i in tqdm(range(idx.start, idx.stop)):
         item = df.iloc[i]
         response = client.request(item, save)
+        lemma = item['lemma']
+        print('lemma: ', lemma)
         print(response)
         df[save].iloc[i] = response
+        if i % 100 == 0:
+            save_df(df, args.output)
     save_df(df, args.output)
 
     #x = df.apply(generate_prompt, axis=1)
